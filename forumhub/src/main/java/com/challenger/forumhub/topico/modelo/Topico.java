@@ -3,6 +3,7 @@ package com.challenger.forumhub.topico.modelo;
 import com.challenger.forumhub.repositorio.UsuarioRepository;
 import com.challenger.forumhub.topico.Cursos;
 import com.challenger.forumhub.topico.StatusTopico;
+import com.challenger.forumhub.topico.dto.DadosAtualizarTopico;
 import com.challenger.forumhub.topico.dto.DadosCriarTopico;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -56,4 +57,20 @@ public class Topico {
 
     }
 
+    public void atualizarInformacoes(DadosAtualizarTopico dados) {
+        if (dados.titulo() != null) {
+            this.titulo = dados.titulo();
+        }
+        if (dados.mensagem() != null) {
+            this.mensagem = dados.mensagem();
+        }
+        if (dados.curso() != null) {
+            this.curso = dados.curso();
+        }
+        if (dados.status() != null) {
+            this.status = dados.status();
+        }
+
+
+    }
 }

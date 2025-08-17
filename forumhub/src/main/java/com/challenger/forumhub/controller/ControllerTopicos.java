@@ -3,7 +3,9 @@ package com.challenger.forumhub.controller;
 
 import com.challenger.forumhub.repositorio.TopicoRepository;
 import com.challenger.forumhub.repositorio.UsuarioRepository;
+import com.challenger.forumhub.topico.dto.DadosAtualizarTopico;
 import com.challenger.forumhub.topico.dto.DadosCriarTopico;
+import com.challenger.forumhub.topico.dto.DadosDetalhadosTopico;
 import com.challenger.forumhub.topico.dto.DadosListagemTopicos;
 import com.challenger.forumhub.topico.modelo.Topico;
 import com.challenger.forumhub.topico.modelo.Usuario;
@@ -40,6 +42,23 @@ public class ControllerTopicos {
         // Converte Page<Topico> para Page<DadosListagemTopicos>
         return pageTopicos.map(DadosListagemTopicos::new);
     }
+
+    @GetMapping("/{id}")
+    public DadosDetalhadosTopico detalhar(@PathVariable Long id) {
+        DadosDetalhadosTopico topico;
+        topico = new DadosDetalhadosTopico(topicoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Topico não encontrado")));
+
+        return topico;
+    }
+
+    @PutMapping
+    @Transactional
+    public void atualizar(@RequestBody @Valid DadosAtualizarTopico dados) {
+        var topico = topicoRepository.getReferenceById(dados.id());
+        topico.atualizarInformacoes(dados);
+    }
+
     @PostMapping
     @Transactional
     public void criarTopco(@RequestBody @Valid DadosCriarTopico dados) {
@@ -49,6 +68,24 @@ public class ControllerTopicos {
         var topico = new Topico(dados, autor);
         topicoRepository.save(topico);
     }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public void excluir(@PathVariable Long id) {
+        Topico topico = topicoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tópico não encontrado"));
+
+        // Remove da lista do usuário para quebrar o relacionamento
+        Usuario autor = topico.getAutor();
+        if (autor != null) {
+            autor.getMeusTopicos().remove(topico);
+        }
+
+        topicoRepository.delete(topico);
+        topicoRepository.flush(); // força execução imediata no banco
+    }
+
+
 
 
 }
