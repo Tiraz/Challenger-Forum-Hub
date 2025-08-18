@@ -12,7 +12,6 @@ public record DadosCriarTopico(
         String mensagem,
         @NotBlank
         Cursos curso,
-        @NotBlank
         DadosUsuario autor
 ) {
 }
