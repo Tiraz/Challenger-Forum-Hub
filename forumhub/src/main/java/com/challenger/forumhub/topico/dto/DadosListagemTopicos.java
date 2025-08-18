@@ -5,6 +5,7 @@ import com.challenger.forumhub.topico.StatusTopico;
 import com.challenger.forumhub.topico.modelo.Topico;
 
 public record DadosListagemTopicos(
+        Long id,
         String titulo,
         String mensagem,
         Cursos curso,
@@ -12,6 +13,6 @@ public record DadosListagemTopicos(
         String nome
 ) {
     public DadosListagemTopicos(Topico d) {
-         this(d.getTitulo(), d.getMensagem(), d.getCurso(), d.getStatus(), d.getAutor().getNome());
+         this(d.getId(), d.getTitulo(), d.getMensagem(), d.getCurso(), d.getStatus(), d.getAutor().getNome());
     }
 }

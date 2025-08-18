@@ -36,20 +36,20 @@ public class ControllerTopicos {
 
 
     @GetMapping
-    public Page<DadosListagemTopicos> listar(@PageableDefault(size = 10, sort = {"titulo"}) Pageable paginacao) {
+    public List<DadosListagemTopicos> listar(@PageableDefault(size = 10, sort = {"titulo"}) Pageable paginacao) {
         // Recupera a página de Topicos do banco
         Page<Topico> pageTopicos = topicoRepository.findAll(paginacao);
 
-        // Converte Page<Topico> para Page<DadosListagemTopicos>
-        return pageTopicos.map(DadosListagemTopicos::new);
+        // Converte Page<Topico> para Page<DadosListagemTopicos> e retorna só o conteúdo
+        return pageTopicos.map(DadosListagemTopicos::new).getContent();
     }
 
     @GetMapping("/{id}")
     public DadosDetalhadosTopico detalhar(@PathVariable Long id) {
+
         DadosDetalhadosTopico topico;
         topico = new DadosDetalhadosTopico(topicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Topico não encontrado")));
-
         return topico;
     }
 
@@ -57,7 +57,14 @@ public class ControllerTopicos {
     @Transactional
     public void atualizar(@RequestBody @Valid DadosAtualizarTopico dados) {
         var topico = topicoRepository.getReferenceById(dados.id());
-        topico.atualizarInformacoes(dados);
+        var autor = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (topico.getAutor().getId() == autor.getId()) {
+            topico.atualizarInformacoes(dados);
+        } else {
+            new RuntimeException("Você não pode atulizar um topico que não é seu.");
+        }
+
     }
 
     @PostMapping
@@ -73,18 +80,25 @@ public class ControllerTopicos {
 
     @DeleteMapping("/{id}")
     @Transactional
-    public void excluir(@PathVariable Long id) {
+    public ResponseEntity excluir(@PathVariable Long id) {
         Topico topico = topicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tópico não encontrado"));
 
-        // Remove da lista do usuário para quebrar o relacionamento
-        Usuario autor = topico.getAutor();
-        if (autor != null) {
-            autor.getMeusTopicos().remove(topico);
+        var autorLogado = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (autorLogado.getId() == topico.getAutor().getId()) {
+            // Remove da lista do usuário para quebrar o relacionamento
+            Usuario autor = topico.getAutor();
+            if (autor != null) {
+                autor.getMeusTopicos().remove(topico);
+            }
+
+            topicoRepository.delete(topico);
+            topicoRepository.flush(); // força execução imediata no banco
+
+            return ResponseEntity.noContent().build();
         }
 
-        topicoRepository.delete(topico);
-        topicoRepository.flush(); // força execução imediata no banco
+        return ResponseEntity.badRequest().build();
     }
 
 
